@@ -1,0 +1,15 @@
+/* Common structure for the games */
+
+public abstract class Game {
+    protected Controller controller;
+    protected int turn;
+
+    public Game(Controller controller) {
+        this.controller = controller;
+    }
+
+    public abstract void start();
+
+    protected abstract boolean checkWin();
+
+}
