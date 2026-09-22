@@ -61,7 +61,7 @@ public class TicTacToe extends Game {
         board.updateBoard(position, piece);
     }
 
-    private boolean endGame(String message) {
+    protected boolean endGame(String message) {
         controller.displayBoard(board);
         System.out.println(message);
         controller.displayWins(player1, player2);

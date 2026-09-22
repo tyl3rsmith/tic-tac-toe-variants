@@ -77,7 +77,11 @@ public class Controller {
     public void displayBoard(Board board) {
         Piece[][] pieces = board.getBoard();
 
-        System.out.println("  0   1   2");
+        System.out.print("  ");
+        for (int col = 0; col < pieces[0].length; col++) {
+            System.out.print(col + "   ");
+        }
+        System.out.println();
 
         for (int row = 0; row < pieces.length; row++) {
             System.out.print(row + " ");
@@ -97,7 +101,17 @@ public class Controller {
             System.out.println();
 
             if (row < pieces.length - 1) {
-                System.out.println("  --+---+--");
+                System.out.print("  ");
+
+                for (int col = 0; col < pieces[row].length; col++) {
+                    System.out.print("---");
+
+                    if (col < pieces[row].length - 1) {
+                        System.out.print("+");
+                    }
+                }
+
+                System.out.println();
             }
         }
     }
@@ -158,5 +172,41 @@ public class Controller {
 
     public void displayTurn(String name) {
         System.out.println(name + "'s turn.");
+    }
+
+    public char chooseSymbol() {
+        System.out.println("Select a symbol: X or O");
+
+        String input = scanner.nextLine().trim().toUpperCase();
+
+        while (!input.equals("X") && !input.equals("O")) {
+            System.out.println("Please select X or O:");
+            input = scanner.nextLine().trim().toUpperCase();
+        }
+
+        return input.charAt(0);
+    }
+
+    public String chooseRole(Player player) {
+        System.out.println(player.getName() + ", choose your role:");
+        System.out.println("1. Order");
+        System.out.println("2. Chaos");
+
+        int choice = scanner.nextInt();
+        while (choice != 1 && choice != 2) {
+            System.out.println("Please enter 1 or 2:");
+            choice = scanner.nextInt();
+        }
+        scanner.nextLine();
+
+        if (choice == 1) {
+            System.out.println(player.getName() + ", you have the role Order");
+            return "Order";
+        } else {
+            System.out.println(player.getName() + ", you have the role Chaos");
+            return "Chaos";
+        }
+
+
     }
 }

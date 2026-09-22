@@ -10,6 +10,9 @@ public abstract class Game {
 
     public abstract void start();
 
+
+    protected abstract boolean endGame(String message);
+
     protected abstract boolean checkWin();
 
 }
