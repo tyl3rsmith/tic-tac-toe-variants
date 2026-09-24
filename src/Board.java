@@ -3,15 +3,32 @@
 public class Board {
     private Piece[][] board;
     private int openSpots;
+    private int rows;
+    private int cols;
 
     public Board(int rows, int cols) {
+        if (rows <= 0 || cols <= 0) {
+            throw new IllegalArgumentException("Board dimensions must be greater than 0.");
+        }
+
         this.board = new Piece[rows][cols];
         this.openSpots = rows * cols;
+        this.rows = rows;
+        this.cols = cols;
+    }
+
+    // default to a 3x3 board
+    public Board() {
+        this(3, 3);
     }
 
     public Piece[][] getBoard() {
         return board;
     }
+
+    public int getRows() { return rows; }
+
+    public int getCols() { return cols; }
 
     public Piece getPiece(int row, int col) { return board[row][col]; }
 

@@ -2,15 +2,23 @@ public class OrderAndChaos extends Game {
     private Board board;
     private Player player1;
     private Player player2;
+    private static final int MIN_BOARD_SIZE = 6;
+    private static final int MAX_BOARD_SIZE = 10;
 
     public OrderAndChaos(Controller controller) {
         super(controller);
-        board = new Board(6, 6);
+    }
+
+    public OrderAndChaos() {
+        super();
     }
 
     @Override
     public void start() {
         controller.displayWelcomeOrderAndChaos();
+        int dimension = controller.askBoardDimensions(MIN_BOARD_SIZE, MAX_BOARD_SIZE);
+
+        board = new Board(dimension, dimension);
 
         player1 = new Player(controller.getPlayerName(1));
         player2 = new Player(controller.getPlayerName(2));
@@ -217,145 +225,128 @@ public class OrderAndChaos extends Game {
 
     @Override
     protected boolean checkWin() {
-        // Order has 5 in a row horizontally
+        // need n - 1 matching pieces to win
+        int rows = board.getRows();
+        int cols = board.getCols();
 
-        // Check each row
-        for (int row = 0; row < 6; row++) {
+        // Check rows
+        for (int r = 0; r < rows; r++) {
 
-            // There are two possible groups of 5:
-            // columns 0-4 and columns 1-5
-            for (int start = 0; start <= 1; start++) {
+            // two ways to get n - 1
+            // columns 0 to n - 2 and columns 1 to n - 1
+            for (int offset = 0; offset <= 1; offset++) {
+                if (board.getPiece(r, offset) == null) {
+                    continue;
+                }
 
-                boolean failed = false;
+                // use this to compare against all other pieces in the same row
+                char symbol = board.getPiece(r, offset).getSymbol();
+                boolean won = true;
 
-                // Check the 5 positions
-                for (int col = start; col < start + 5; col++) {
-
-                    // Empty spot means this group does not count
-                    if (board.getPiece(row, col) == null) {
-                        failed = true;
-                        break;
-                    }
-
-                    // Make sure all pieces match
-                    if (col > start && board.getPiece(row, col).getSymbol() != board.getPiece(row, col - 1).getSymbol()) {
-                        failed = true;
+                for (int c = offset; c < offset + cols - 1; c++) {
+                    // empty position or the symbol doesn't match
+                    if (board.getPiece(r, c) == null || board.getPiece(r, c).getSymbol() != symbol) {
+                        won = false;
                         break;
                     }
                 }
 
-                // If we found 5 matching pieces
-                if (!failed) {
+                if (won) {
                     return true;
                 }
             }
         }
-
-        // Order has 5 in a row vertically
 
         // Check each column
-        for (int col = 0; col < 6; col++) {
+        for (int c = 0; c < cols; c++) {
 
-            // There are two possible groups of 5:
-            // rows 0-4 and rows 1-5
-            for (int start = 0; start <= 1; start++) {
-
-                boolean failed = false;
-
-                // check the 5 positions
-                for (int row = start; row < start + 5; row++) {
-
-                    // Empty spot means this group does not count
-                    if (board.getPiece(row, col) == null) {
-                        failed = true;
-                        break;
-                    }
-
-                    // Make sure all pieces match
-                    if (row > start && board.getPiece(row, col).getSymbol() != board.getPiece(row - 1, col).getSymbol()) {
-                        failed = true;
-                        break;
-                    }
+            // two ways to get n - 1
+            // rows 0 to n - 2 and rows 1 to n - 1
+            for (int offset = 0; offset <= 1; offset++) {
+                if (board.getPiece(offset, c) == null) {
+                    continue;
                 }
 
-                // If we found 5 matching pieces
-                if (!failed) {
+                // use this to compare against all other pieces in the same col
+                char symbol = board.getPiece(offset, c).getSymbol();
+                boolean won = true;
+
+                for (int r = offset; r < offset + rows - 1; r++) {
+                    // empty position or the symbol doesn't match
+                    if (board.getPiece(r, c) == null || board.getPiece(r, c).getSymbol() != symbol) {
+                        won = false;
+                        break;
+                    }
+
+                }
+                if (won) {
                     return true;
                 }
             }
         }
-
-        // Order has 5 in a row diagonally
 
         // Check diagonal (Top-Left to Bottom-Right)
         for (int startRow = 0; startRow <= 1; startRow++) {
-
             for (int startCol = 0; startCol <= 1; startCol++) {
+                if (board.getPiece(startRow, startCol) == null) {
+                    continue;
+                }
 
-                boolean failed = false;
+                // use this to compare against all other pieces in the same diag
+                char symbol = board.getPiece(startRow, startCol).getSymbol();
+                boolean won = true;
 
-                // Check the 5 diagonal positions
-                for (int i = 0; i < 5; i++) {
+                // Check the n - 1 diagonal positions
+                for (int i = 0; i < rows - 1; i++) {
 
-                    int row = startRow + i;
-                    int col = startCol + i;
+                    int r = startRow + i;
+                    int c = startCol + i;
 
-                    if (board.getPiece(row, col) == null) {
-                        failed = true;
-                        break;
-                    }
-
-                    // Make sure all pieces match
-                    if (i > 0 && board.getPiece(row, col).getSymbol() != board.getPiece(row - 1, col - 1).getSymbol()) {
-                        failed = true;
+                    if (board.getPiece(r, c) == null || board.getPiece(r, c).getSymbol() != symbol) {
+                        won = false;
                         break;
                     }
                 }
 
-                // If we found 5 matching pieces
-                if (!failed) {
+                if (won) {
                     return true;
                 }
             }
         }
 
         // Check diagonal (Top-Right to Bottom-Left)
-
         for (int startRow = 0; startRow <= 1; startRow++) {
+            for (int startCol = cols - 2; startCol < cols; startCol++) {
+                if (board.getPiece(startRow, startCol) == null) {
+                    continue;
+                }
 
-            for (int startCol = 4; startCol < 6; startCol++) {
-
-                boolean failed = false;
+                // use this to compare against all other pieces in the same diag
+                char symbol = board.getPiece(startRow, startCol).getSymbol();
+                boolean won = true;
 
                 // Check the 5 diagonal positions
-                for (int i = 0; i < 5; i++) {
+                for (int i = 0; i < rows - 1; i++) {
 
-                    int row = startRow + i;
-                    int col = startCol - i;
+                    int r = startRow + i;
+                    int c = startCol - i;
 
-                    if (board.getPiece(row, col) == null) {
-                        failed = true;
-                        break;
-                    }
-
-                    // Make sure all pieces match
-                    if (i > 0 && board.getPiece(row, col).getSymbol() != board.getPiece(row - 1, col + 1).getSymbol()) {
-                        failed = true;
+                    if (board.getPiece(r, c) == null || board.getPiece(r, c).getSymbol() != symbol) {
+                        won = false;
                         break;
                     }
                 }
 
                 // If we found 5 matching pieces
-                if (!failed) {
+                if (won) {
                     return true;
                 }
             }
         }
-
         return false;
     }
 
-    private Player getCurrentPlayer() {
+    private Player getCurrentPlayer () {
         if (turn % 2 == 0) {
             return player1;
         } else {
@@ -363,7 +354,7 @@ public class OrderAndChaos extends Game {
         }
     }
 
-    private void makeMove(Player currentPlayer, char symbol) {
+    private void makeMove (Player currentPlayer,char symbol) {
         Position position = controller.getMove(currentPlayer);
 
         while (!board.isValidMove(position)) {
@@ -374,5 +365,4 @@ public class OrderAndChaos extends Game {
         Piece piece = new Piece(symbol, position);
         board.updateBoard(position, piece);
     }
-
 }

@@ -8,8 +8,9 @@ public abstract class Game {
         this.controller = controller;
     }
 
-    public abstract void start();
+    public Game() { this.controller = new Controller(); }
 
+    public abstract void start();
 
     protected abstract boolean endGame(String message);
 

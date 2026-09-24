@@ -2,15 +2,23 @@ public class TicTacToe extends Game {
     private Board board;
     private Player player1;
     private Player player2;
+    private static final int MIN_BOARD_SIZE = 3;
+    private static final int MAX_BOARD_SIZE = 10;
 
     public TicTacToe(Controller controller) {
         super(controller);
-        board = new Board(3, 3);
+    }
+
+    public TicTacToe() {
+        super();
     }
 
     @Override
     public void start() {
         controller.displayWelcomeTicTacToe();
+        int dimension = controller.askBoardDimensions(MIN_BOARD_SIZE, MAX_BOARD_SIZE);
+
+        board = new Board(dimension, dimension);
 
         player1 = new Player(controller.getPlayerName(1));
         player2 = new Player(controller.getPlayerName(2));
@@ -78,48 +86,85 @@ public class TicTacToe extends Game {
 
     @Override
     protected boolean checkWin() {
-        // 1. Check Rows
-        for (int i = 0; i < 3; i++) {
-            if (board.getPiece(i, 0) != null &&
-                    board.getPiece(i, 1) != null &&
-                    board.getPiece(i, 2) != null &&
-                    board.getPiece(i, 0).getSymbol() == board.getPiece(i, 1).getSymbol() &&
-                    board.getPiece(i, 1).getSymbol() == board.getPiece(i, 2).getSymbol()) {
+        int rows = board.getRows();
+        int cols = board.getCols();
 
-                return true;
+        // Check rows
+        for (int r = 0; r < rows; r++) {
+            if (board.getPiece(r, 0) == null) {
+                continue;
             }
-        }
 
-        // 2. Check Columns
-        for (int i = 0; i < 3; i++) {
-            if (board.getPiece(0, i) != null &&
-                    board.getPiece(1, i) != null &&
-                    board.getPiece(2, i) != null &&
-                    board.getPiece(0, i).getSymbol() == board.getPiece(1, i).getSymbol() &&
-                    board.getPiece(1, i).getSymbol() == board.getPiece(2, i).getSymbol()) {
+            // use this to compare against all other pieces in the same row
+            char symbol = board.getPiece(r, 0).getSymbol();
+            boolean won = true;
 
-                return true;
+            for (int c = 1; c < cols; c++) {
+                // empty position or the symbol doesn't match
+                if (board.getPiece(r, c) == null || board.getPiece(r, c).getSymbol() != symbol) {
+                    won = false;
+                    break;
+                }
             }
+
+            if (won) { return true; }
         }
 
-        // 3. Check Diagonal (Top-Left to Bottom-Right)
-        if (board.getPiece(0, 0) != null &&
-                board.getPiece(1, 1) != null &&
-                board.getPiece(2, 2) != null &&
-                board.getPiece(0, 0).getSymbol() == board.getPiece(1, 1).getSymbol() &&
-                board.getPiece(1, 1).getSymbol() == board.getPiece(2, 2).getSymbol()) {
+        // Check columns
+        for (int c = 0; c < cols; c++) {
+            if (board.getPiece(0, c) == null) {
+                continue;
+            }
 
-            return true;
+            // use this to compare against all other pieces in the same col
+            char symbol = board.getPiece(0, c).getSymbol();
+            boolean won = true;
+
+            for (int r = 1; r < rows; r++) {
+                // empty position or the symbol doesn't match
+                if (board.getPiece(r, c) == null || board.getPiece(r, c).getSymbol() != symbol) {
+                    won = false;
+                    break;
+                }
+            }
+
+            if (won) { return true; }
         }
 
-        // 4. Check Anti-Diagonal (Top-Right to Bottom-Left)
-        if (board.getPiece(0, 2) != null &&
-                board.getPiece(1, 1) != null &&
-                board.getPiece(2, 0) != null &&
-                board.getPiece(0, 2).getSymbol() == board.getPiece(1, 1).getSymbol() &&
-                board.getPiece(1, 1).getSymbol() == board.getPiece(2, 0).getSymbol()) {
+        // Check top-left to bottom-right diagonal
+        if (rows == cols && board.getPiece(0, 0) != null) {
+            // use this to compare against all other pieces in the same diag
+            char symbol = board.getPiece(0, 0).getSymbol();
+            boolean won = true;
 
-            return true;
+            for (int i = 1; i < rows; i++) {
+                // empty position or the symbol doesn't match
+                if (board.getPiece(i, i) == null || board.getPiece(i, i).getSymbol() != symbol) {
+                    won = false;
+                    break;
+                }
+            }
+
+            if (won) { return true; }
+        }
+
+        // Check top-right to bottom-left diagonal
+        if (rows == cols && board.getPiece(0, cols - 1) != null) {
+            // use this to compare against all other pieces in the same diag
+            char symbol = board.getPiece(0, cols - 1).getSymbol();
+            boolean won = true;
+
+            for (int i = 1; i < rows; i++) {
+                int col = cols - 1 - i;
+
+                // empty position or the symbol doesn't match
+                if (board.getPiece(i, col) == null || board.getPiece(i, col).getSymbol() != symbol) {
+                    won = false;
+                    break;
+                }
+            }
+
+            if (won) { return true; }
         }
 
         return false;

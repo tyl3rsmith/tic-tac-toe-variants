@@ -4,10 +4,18 @@ public class Player {
     private String name;
     private int wins;
     private String role;
+    private static int count;
 
-    Player(String name) {
+    public Player(String name) {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("A name must be provided");
+        }
         this.name = name;
+        count++;
     }
+
+    // if no name specified default name to player
+    public Player() { this("player " + Integer.toString(count)); }
 
     public String getName() {
         return this.name;

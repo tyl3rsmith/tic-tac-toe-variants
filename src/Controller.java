@@ -6,13 +6,13 @@ public class Controller {
     private final Scanner scanner = new Scanner(System.in);
 
     public void start() {
-        int choice = getChoice();
+        int gameChoice = getChoice();
 
-        while (choice != 0) {
-            Game game = getGame(choice);
+        while (gameChoice != 0) { // 0 means player wants to exit
+            Game game = getGame(gameChoice);
             game.start();
 
-            choice = switchGame();
+            gameChoice = switchGame();
         }
 
         this.displayBye();
@@ -33,15 +33,15 @@ public class Controller {
             System.out.println("2. Order and Chaos");
             choice = scanner.nextInt();
         }
-        scanner.nextLine(); // consume leftover newline
+        scanner.nextLine();
         return choice;
     }
 
     private Game getGame(int choice) {
         Game game;
-        if (choice == 1) {
+        if (choice == 1) { // 1 -> Tic Tac Toe
             game = new TicTacToe(this);
-        } else {
+        } else { // 2 -> Order and Chaos
             game = new OrderAndChaos(this);
         }
         return game;
@@ -58,6 +58,26 @@ public class Controller {
         System.out.println("4. A row can be horizontal, vertical, or diagonal.");
     }
 
+    public int askBoardDimensions(int min, int max) {
+        System.out.println("Please specify the board size between " + min + " and " + max + " (e.g. enter 3 for a 3x3 board): ");
+
+        while (!scanner.hasNextInt()) {
+            System.out.print("Invalid input. Enter an integer: ");
+            scanner.next();
+        }
+
+        int boardSize = scanner.nextInt();
+
+        while (boardSize < min || boardSize > max) {
+            System.out.println("Invalid board size. Please enter a size between " + min + " and " + max);
+
+            boardSize = scanner.nextInt();
+        }
+        scanner.nextLine();
+
+        return boardSize;
+    }
+
     public void displayWelcomeOrderAndChaos() {
         System.out.println("===================================");
         System.out.println("    Welcome to Order and Chaos!");
@@ -71,7 +91,9 @@ public class Controller {
 
     public String getPlayerName(int playerNumber) {
         System.out.println("Player " + playerNumber + ", please enter your name:");
-        return scanner.nextLine();
+        String playerName = scanner.nextLine();
+
+        return playerName;
     }
 
     public void displayBoard(Board board) {
@@ -162,7 +184,7 @@ public class Controller {
             System.out.println("2. Order and Chaos");
             choice = scanner.nextInt();
         }
-        scanner.nextLine(); // consume leftover newline
+        scanner.nextLine();
         return choice;
     }
 
