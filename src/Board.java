@@ -1,12 +1,14 @@
-/* This class handles the board state and operations */
+/* This class represents the game board and manages the pieces placed on the board. It's responsible for updating,
+resetting, validating, and checking whether the board is full. */
 
 public class Board {
     private Piece[][] board;
-    private int openSpots;
-    private int rows;
-    private int cols;
+    private int openSpots; // this will be helpful for checking win conditions
+    private final int rows;
+    private final int cols;
 
     public Board(int rows, int cols) {
+        // can't have negative dimensions
         if (rows <= 0 || cols <= 0) {
             throw new IllegalArgumentException("Board dimensions must be greater than 0.");
         }
@@ -17,35 +19,33 @@ public class Board {
         this.cols = cols;
     }
 
-    // default to a 3x3 board
+    // if not specified default to a 3x3 board
     public Board() {
         this(3, 3);
     }
 
-    public Piece[][] getBoard() {
-        return board;
+    public int getRows() {
+        return rows;
     }
 
-    public int getRows() { return rows; }
+    public int getCols() {
+        return cols;
+    }
 
-    public int getCols() { return cols; }
-
-    public Piece getPiece(int row, int col) { return board[row][col]; }
-
-    public void setBoard(Piece[][] board) {
-        this.board = board;
+    public Piece getPiece(int row, int col) {
+        return board[row][col];
     }
 
     public boolean isValidMove(Position position) {
         int row = position.getRow();
         int col = position.getCol();
 
-        // out of bounds check
-        if (row >= board.length || row < 0 || col >= board[0].length || col < 0) {
+        // out of bounds
+        if (row >= rows || row < 0 || col >= cols || col < 0) {
             return false;
         }
 
-        // return false if spot is already occupied
+        // check if the spot is empty
         return board[row][col] == null;
     }
 
@@ -61,8 +61,8 @@ public class Board {
         return openSpots == 0;
     }
 
-    void resetBoard() {
-        board = new Piece[board.length][board[0].length];
-        openSpots = board.length * board[0].length;
+    public void resetBoard() {
+        board = new Piece[rows][cols];
+        openSpots = rows * cols;
     }
 }

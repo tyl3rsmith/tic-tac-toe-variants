@@ -1,13 +1,15 @@
-/* This class handles all piece state and behavior */
+/* This class represents a piece placed on the board. It stores the piece's symbol and position. */
 
 public class Piece {
-    private char symbol;
-    private Position position;
+    private final char symbol;
+    private final Position position;
 
     public Piece(char symbol, Position position) {
+        // not allowing pieces to exist without an associated position
         if (position == null) {
             throw new IllegalArgumentException("You must specify a position for the piece");
         }
+
         this.symbol = symbol;
         this.position = position;
     }
@@ -22,7 +24,11 @@ public class Piece {
         this('X');
     }
 
-    public char getSymbol() { return symbol; }
+    public char getSymbol() {
+        return symbol;
+    }
 
-    public Position getPosition() { return position; }
+    public Position getPosition() {
+        return position;
+    }
 }

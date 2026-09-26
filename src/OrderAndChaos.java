@@ -1,9 +1,9 @@
+/* This class is a subclass of Game and implements the Order and Chaos game, including board setup,
+role assignment, player turns, Order win detection, and Chaos win detection. */
+
 public class OrderAndChaos extends Game {
-    private Board board;
-    private Player player1;
-    private Player player2;
     private static final int MIN_BOARD_SIZE = 6;
-    private static final int MAX_BOARD_SIZE = 10;
+    private static final int MAX_BOARD_SIZE = 6; // can make this larger game will still work
 
     public OrderAndChaos(Controller controller) {
         super(controller);
@@ -16,145 +16,317 @@ public class OrderAndChaos extends Game {
     @Override
     public void start() {
         controller.displayWelcomeOrderAndChaos();
-        int dimension = controller.askBoardDimensions(MIN_BOARD_SIZE, MAX_BOARD_SIZE);
 
-        board = new Board(dimension, dimension);
+        setupGame();
 
-        player1 = new Player(controller.getPlayerName(1));
-        player2 = new Player(controller.getPlayerName(2));
+        boolean playing = true;
 
+        while (playing) {
+            playTurn(); // take a turn
+
+            if (checkWin()) {
+                playing = handleOrderWin(); // check if order won
+            } else if (!orderCanStillWin()) {
+                playing = handleChaosWin(); // check if there's no more moves left, chaos wins
+            } else if (board.isFull()) {
+                playing = handleChaosFullBoard(); // full board chaos wins
+            } else {
+                turn++; // play the next turn
+            }
+        }
+    }
+
+    private void assignRoles() {
         String role1 = controller.chooseRole(player1);
+        String role2; // the other person automatically gets whatever player 1 didn't pick
 
-        String role2;
         if (role1.equals("Order")) {
             role2 = "Chaos";
-            System.out.println(player2.getName() + ", you have the role Chaos");
         } else {
             role2 = "Order";
-            System.out.println(player2.getName() + ", you have the role Order");
         }
 
         player1.setRole(role1);
         player2.setRole(role2);
 
-        boolean playing = true;
-
-        while (playing) {
-            controller.displayBoard(board);
-            Player currentPlayer = getCurrentPlayer();
-
-            controller.displayTurn(currentPlayer.getName());
-            this.makeMove(currentPlayer, controller.chooseSymbol());
-
-            if (checkWin()) {
-                // order wins
-                if (player1.getRole().equals("Order")) {
-                    player1.setWins(player1.getWins() + 1);
-                    playing = endGame(player1.getName() + ", Order wins!");
-                } else {
-                    player2.setWins(player2.getWins() + 1);
-                    playing = endGame(player2.getName() + ", Order wins!");
-                }
-
-                continue;
-            } else if (!orderCanStillWin()) {
-                // chaos wins
-                if (player1.getRole().equals("Chaos")) {
-                    player1.setWins(player1.getWins() + 1);
-                    playing = endGame(player1.getName() + ", Chaos wins!");
-                } else {
-                    player2.setWins(player2.getWins() + 1);
-                    playing = endGame(player2.getName() + ", Chaos wins!");
-                }
-                continue;
-
-            } else if (board.isFull()) {
-                // chaos wins
-                if (player1.getRole().equals("Chaos")) {
-                    player1.setWins(player1.getWins() + 1);
-                    playing = endGame(player1.getName() + ", Chaos wins no more valid moves!");
-                } else {
-                    player2.setWins(player2.getWins() + 1);
-                    playing = endGame(player2.getName() + ", Chaos wins no more valid moves!");
-                }
-                continue;
-            }
-
-            turn++;
-
-        }
+        System.out.println(player2.getName() + ", you have the role " + role2);
     }
 
-    private boolean orderCanStillWin() {
+    private void setupGame() {
+        setupBoardAndPlayers(MIN_BOARD_SIZE, MAX_BOARD_SIZE);
+        assignRoles();
+    }
 
-        // Check horizontal groups
-        for (int row = 0; row < 6; row++) {
-            for (int start = 0; start <= 1; start++) {
+    @Override
+    protected char chooseSymbol(Player player) {
+        return controller.chooseSymbol();
+    }
 
-                boolean hasX = false;
-                boolean hasO = false;
+    private boolean handleOrderWin() {
+        Player orderPlayer = getOrderPlayer();
 
-                for (int col = start; col < start + 5; col++) {
-                    Piece piece = board.getPiece(row, col);
+        orderPlayer.addWin();
 
-                    if (piece != null) {
-                        if (piece.getSymbol() == 'X') {
-                            hasX = true;
-                        } else {
-                            hasO = true;
-                        }
+        return endGame(orderPlayer.getName() + ", Order wins!");
+    }
+
+    private boolean handleChaosWin() {
+        Player chaosPlayer = getChaosPlayer();
+
+        chaosPlayer.addWin();
+
+        return endGame(chaosPlayer.getName() + ", Chaos wins!");
+    }
+
+    private boolean handleChaosFullBoard() {
+        Player chaosPlayer = getChaosPlayer();
+
+        chaosPlayer.addWin();
+
+        return endGame(chaosPlayer.getName() + ", Chaos wins no more valid moves!");
+    }
+
+    private Player getOrderPlayer() {
+        return player1.getRole().equals("Order") ? player1 : player2;
+    }
+
+    private Player getChaosPlayer() {
+        return player1.getRole().equals("Chaos") ? player1 : player2;
+    }
+
+    private boolean checkRows() {
+        for (int row = 0; row < board.getRows(); row++) {
+            // we need n - 1 consecutive pieces in a row
+            // could be from indices 0 to n - 2 or 1 to n - 1
+            // we have a offset to try both sequences
+            for (int offset = 0; offset <= 1; offset++) {
+                // empty spot
+                if (board.getPiece(row, offset) == null) {
+                    continue;
+                }
+
+                // use this to compare to other pieces in the same row
+                char symbol = board.getPiece(row, offset).getSymbol();
+                boolean won = true;
+
+                for (int col = offset; col < offset + board.getCols() - 1; col++) {
+                    // mismatch or empty spot
+                    if (board.getPiece(row, col) == null || board.getPiece(row, col).getSymbol() != symbol) {
+                        won = false;
+                        break;
                     }
                 }
 
-                // Order can still win if this group
-                // does not contain both X and O
-                if (!hasX || !hasO) {
+                if (won) {
                     return true;
                 }
             }
         }
 
-        // Check vertical groups
-        for (int col = 0; col < 6; col++) {
-            for (int start = 0; start <= 1; start++) {
+        return false;
+    }
 
-                boolean hasX = false;
-                boolean hasO = false;
+    private boolean checkColumns() {
+        for (int col = 0; col < board.getCols(); col++) {
+            // we need n - 1 consecutive pieces in a col
+            // could be from indices 0 to n - 2 or 1 to n - 1
+            // we have a offset to try both sequences
+            for (int offset = 0; offset <= 1; offset++) {
+                // empty spot
+                if (board.getPiece(offset, col) == null) {
+                    continue;
+                }
 
-                for (int row = start; row < start + 5; row++) {
-                    Piece piece = board.getPiece(row, col);
+                // use this to compare to other pieces in the same col
+                char symbol = board.getPiece(offset, col).getSymbol();
+                boolean won = true;
 
-                    if (piece != null) {
-                        if (piece.getSymbol() == 'X') {
-                            hasX = true;
-                        } else {
-                            hasO = true;
-                        }
+                for (int row = offset; row < offset + board.getRows() - 1; row++) {
+                    // mismatch or empty spot
+                    if (board.getPiece(row, col) == null || board.getPiece(row, col).getSymbol() != symbol) {
+                        won = false;
+                        break;
                     }
                 }
 
-                // Order can still win if this group
-                // does not contain both X and O
-                if (!hasX || !hasO) {
+                if (won) {
                     return true;
                 }
             }
         }
 
-        // Check diagonal (Top-Left to Bottom-Right)
+        return false;
+    }
+
+    private boolean checkMainDiagonals() {
+        // we need n - 1 consecutive pieces on the main diag
+        // the starting row and column can only be 0 or 1.
         for (int startRow = 0; startRow <= 1; startRow++) {
             for (int startCol = 0; startCol <= 1; startCol++) {
+                // empty spot
+                if (board.getPiece(startRow, startCol) == null) {
+                    continue;
+                }
 
+                // use this to compare to other pieces in the same diag
+                char symbol = board.getPiece(startRow, startCol).getSymbol();
+                boolean won = true;
+
+                for (int i = 0; i < board.getRows() - 1; i++) {
+                    int row = startRow + i;
+                    int col = startCol + i;
+
+                    // mismatched piece or empty spot
+                    if (board.getPiece(row, col) == null || board.getPiece(row, col).getSymbol() != symbol) {
+                        won = false;
+                        break;
+                    }
+                }
+
+                if (won) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean checkAntiDiagonals() {
+        // same as before we need n - 1 consecutive pieces on the anti diag
+        // the starting row can be 0 or 1 while the starting column can be n - 1 or n - 2
+        for (int startRow = 0; startRow <= 1; startRow++) {
+            for (int startCol = board.getCols() - 2; startCol < board.getCols(); startCol++) {
+
+                // empty spot
+                if (board.getPiece(startRow, startCol) == null) {
+                    continue;
+                }
+
+                // use this to compare to other pieces in the same diag
+                char symbol = board.getPiece(startRow, startCol).getSymbol();
+                boolean won = true;
+
+                for (int i = 0; i < board.getRows() - 1; i++) {
+                    int row = startRow + i;
+                    int col = startCol - i;
+
+                    // mismatch or empty spot
+                    if (board.getPiece(row, col) == null || board.getPiece(row, col).getSymbol() != symbol) {
+                        won = false;
+                        break;
+                    }
+                }
+
+                if (won) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean horizontalCanStillWin() {
+        int rows = board.getRows();
+        int cols = board.getCols();
+        int winLength = rows - 1; // need n - 1 consecutive pieces to win.
+
+        for (int row = 0; row < rows; row++) {
+            // for each row check every possible starting column for a sequence of length n - 1
+            for (int start = 0; start <= cols - winLength; start++) {
+
+                // tracking whether the sequence is with X's or O's
                 boolean hasX = false;
                 boolean hasO = false;
 
-                for (int i = 0; i < 5; i++) {
+                // check each position within the current sequence
+                for (int col = start; col < start + winLength; col++) {
+                    Piece piece = board.getPiece(row, col);
 
+                    // ignore any empty spots
+                    // want to see which symbols appear in the sequence
+                    if (piece != null) {
+                        if (piece.getSymbol() == 'X') {
+                            hasX = true;
+                        } else {
+                            hasO = true;
+                        }
+                    }
+                }
+
+                // if the sequence does not contain both X and O,
+                // it is still possible to fill it with one symbol and create a winning sequence.
+                if (!hasX || !hasO) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean verticalCanStillWin() {
+        int rows = board.getRows();
+        int cols = board.getCols();
+        int winLength = rows - 1;
+
+        for (int col = 0; col < cols; col++) {
+            // for each col check every possible starting row for a sequence of length n - 1
+            for (int start = 0; start <= rows - winLength; start++) {
+
+                // tracking whether the sequence is with X's or O's
+                boolean hasX = false;
+                boolean hasO = false;
+
+                // check each position within the current sequence
+                for (int row = start; row < start + winLength; row++) {
+                    Piece piece = board.getPiece(row, col);
+
+                    // ignore any empty spots
+                    // want to see which symbols appear in the sequence
+                    if (piece != null) {
+                        if (piece.getSymbol() == 'X') {
+                            hasX = true;
+                        } else {
+                            hasO = true;
+                        }
+                    }
+                }
+
+                // if the sequence does not contain both X and O,
+                // it is still possible to fill it with one symbol and create a winning sequence.
+                if (!hasX || !hasO) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean mainDiagonalCanStillWin() {
+        int rows = board.getRows();
+        int cols = board.getCols();
+        int winLength = rows - 1;
+
+        for (int startRow = 0; startRow <= rows - winLength; startRow++) {
+            // check every starting row and column in the main diagonal for a sequence of length n - 1
+            for (int startCol = 0; startCol <= cols - winLength; startCol++) {
+
+                // tracking whether the sequence is with X's or O's
+                boolean hasX = false;
+                boolean hasO = false;
+
+                // check each position within the current sequence
+                for (int i = 0; i < winLength; i++) {
                     int row = startRow + i;
                     int col = startCol + i;
 
                     Piece piece = board.getPiece(row, col);
 
+                    // ignore any empty spots
+                    // want to see which symbols appear in the sequence
                     if (piece != null) {
                         if (piece.getSymbol() == 'X') {
                             hasX = true;
@@ -164,28 +336,39 @@ public class OrderAndChaos extends Game {
                     }
                 }
 
-                // Order can still win if this group
-                // does not contain both X and O
+                // if the sequence does not contain both X and O,
+                // it is still possible to fill it with one symbol and create a winning sequence.
                 if (!hasX || !hasO) {
                     return true;
                 }
             }
         }
 
-        // Check diagonal (Top-Right to Bottom-Left)
-        for (int startRow = 0; startRow <= 1; startRow++) {
-            for (int startCol = 4; startCol < 6; startCol++) {
+        return false;
+    }
 
+    private boolean antiDiagonalCanStillWin() {
+        int rows = board.getRows();
+        int cols = board.getCols();
+        int winLength = rows - 1;
+
+        for (int startRow = 0; startRow <= rows - winLength; startRow++) {
+            // check every starting row and column in the anti diagonal for a sequence of length n - 1
+            for (int startCol = winLength - 1; startCol < cols; startCol++) {
+
+                // tracking whether the sequence is with X's or O's
                 boolean hasX = false;
                 boolean hasO = false;
 
-                for (int i = 0; i < 5; i++) {
-
+                // check each position within the current sequence
+                for (int i = 0; i < winLength; i++) {
                     int row = startRow + i;
                     int col = startCol - i;
 
                     Piece piece = board.getPiece(row, col);
 
+                    // ignore any empty spots
+                    // want to see which symbols appear in the sequence
                     if (piece != null) {
                         if (piece.getSymbol() == 'X') {
                             hasX = true;
@@ -195,174 +378,61 @@ public class OrderAndChaos extends Game {
                     }
                 }
 
-                // Order can still win if this group
-                // does not contain both X and O
+                // if the sequence does not contain both X and O,
+                // it is still possible to fill it with one symbol and create a winning sequence.
                 if (!hasX || !hasO) {
                     return true;
                 }
             }
         }
 
-        // Every possible group of 5 contains both X and O
         return false;
     }
 
-    @Override
-    protected boolean endGame(String message) {
-        controller.displayBoard(board);
-        System.out.println(message);
-        controller.displayWins(player1, player2);
-
-        boolean playAgain = controller.playAgain();
-
-        if (playAgain) {
-            board.resetBoard();
-            turn = 0;
-        }
-
-        return playAgain;
+    private boolean orderCanStillWin() {
+        return horizontalCanStillWin() || verticalCanStillWin() || mainDiagonalCanStillWin() || antiDiagonalCanStillWin();
     }
 
     @Override
     protected boolean checkWin() {
-        // need n - 1 matching pieces to win
-        int rows = board.getRows();
-        int cols = board.getCols();
-
-        // Check rows
-        for (int r = 0; r < rows; r++) {
-
-            // two ways to get n - 1
-            // columns 0 to n - 2 and columns 1 to n - 1
-            for (int offset = 0; offset <= 1; offset++) {
-                if (board.getPiece(r, offset) == null) {
-                    continue;
-                }
-
-                // use this to compare against all other pieces in the same row
-                char symbol = board.getPiece(r, offset).getSymbol();
-                boolean won = true;
-
-                for (int c = offset; c < offset + cols - 1; c++) {
-                    // empty position or the symbol doesn't match
-                    if (board.getPiece(r, c) == null || board.getPiece(r, c).getSymbol() != symbol) {
-                        won = false;
-                        break;
-                    }
-                }
-
-                if (won) {
-                    return true;
-                }
-            }
-        }
-
-        // Check each column
-        for (int c = 0; c < cols; c++) {
-
-            // two ways to get n - 1
-            // rows 0 to n - 2 and rows 1 to n - 1
-            for (int offset = 0; offset <= 1; offset++) {
-                if (board.getPiece(offset, c) == null) {
-                    continue;
-                }
-
-                // use this to compare against all other pieces in the same col
-                char symbol = board.getPiece(offset, c).getSymbol();
-                boolean won = true;
-
-                for (int r = offset; r < offset + rows - 1; r++) {
-                    // empty position or the symbol doesn't match
-                    if (board.getPiece(r, c) == null || board.getPiece(r, c).getSymbol() != symbol) {
-                        won = false;
-                        break;
-                    }
-
-                }
-                if (won) {
-                    return true;
-                }
-            }
-        }
-
-        // Check diagonal (Top-Left to Bottom-Right)
-        for (int startRow = 0; startRow <= 1; startRow++) {
-            for (int startCol = 0; startCol <= 1; startCol++) {
-                if (board.getPiece(startRow, startCol) == null) {
-                    continue;
-                }
-
-                // use this to compare against all other pieces in the same diag
-                char symbol = board.getPiece(startRow, startCol).getSymbol();
-                boolean won = true;
-
-                // Check the n - 1 diagonal positions
-                for (int i = 0; i < rows - 1; i++) {
-
-                    int r = startRow + i;
-                    int c = startCol + i;
-
-                    if (board.getPiece(r, c) == null || board.getPiece(r, c).getSymbol() != symbol) {
-                        won = false;
-                        break;
-                    }
-                }
-
-                if (won) {
-                    return true;
-                }
-            }
-        }
-
-        // Check diagonal (Top-Right to Bottom-Left)
-        for (int startRow = 0; startRow <= 1; startRow++) {
-            for (int startCol = cols - 2; startCol < cols; startCol++) {
-                if (board.getPiece(startRow, startCol) == null) {
-                    continue;
-                }
-
-                // use this to compare against all other pieces in the same diag
-                char symbol = board.getPiece(startRow, startCol).getSymbol();
-                boolean won = true;
-
-                // Check the 5 diagonal positions
-                for (int i = 0; i < rows - 1; i++) {
-
-                    int r = startRow + i;
-                    int c = startCol - i;
-
-                    if (board.getPiece(r, c) == null || board.getPiece(r, c).getSymbol() != symbol) {
-                        won = false;
-                        break;
-                    }
-                }
-
-                // If we found 5 matching pieces
-                if (won) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return checkRows() || checkColumns() || checkMainDiagonals() || checkAntiDiagonals();
     }
 
-    private Player getCurrentPlayer () {
-        if (turn % 2 == 0) {
-            return player1;
-        } else {
-            return player2;
+    /*
+    public void testChaosBoard() {
+        board = new Board(10, 10);
+
+        char[][] testBoard = {
+                {'X','O','O','X','X','O','O','X','O','O'},
+                {'X','X','X','O','O','X','O','X','X','X'},
+                {'O','X','O','X','X','X','X','X','O','O'},
+                {'X','X','O','O','X','O','O','O','X','X'},
+                {'X','O','X','O','X','X','X','O','X','X'},
+                {'O','X','O','X','X','O','X','O','O','X'},
+                {'X','O','O','X','O','X','O','O','X','X'},
+                {'X','X','O','X','O','X','O','O','O','O'},
+                {'O','X','O','X','X','O','X','X','X','O'},
+                {'X','X','O','X','X','X','O','O','O','X'}
+        };
+
+        // Put each Piece onto the board
+        for (int row = 0; row < 10; row++) {
+            for (int col = 0; col < 10; col++) {
+                Position position = new Position(row, col);
+                Piece piece = new Piece(testBoard[row][col], position);
+
+                board.updateBoard(position, piece);
+            }
+        }
+
+        controller.displayBoard(board);
+
+        System.out.println("checkWin(): " + checkWin());
+        System.out.println("orderCanStillWin(): " + orderCanStillWin());
+
+        if (!checkWin() && !orderCanStillWin()) {
+            System.out.println("chaos won in 10x10");
         }
     }
-
-    private void makeMove (Player currentPlayer,char symbol) {
-        Position position = controller.getMove(currentPlayer);
-
-        while (!board.isValidMove(position)) {
-            System.out.println("Invalid move. Please choose another position.");
-            position = controller.getMove(currentPlayer);
-        }
-
-        Piece piece = new Piece(symbol, position);
-        board.updateBoard(position, piece);
-    }
+    */
 }

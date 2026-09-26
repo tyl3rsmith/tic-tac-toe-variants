@@ -1,13 +1,13 @@
-/* This class represents a player */
+/* This class represents a player and stores information such as their name, role, and number of wins. */
 
 public class Player {
-    private String name;
+    private final String name;
     private int wins;
     private String role;
     private static int count;
 
     public Player(String name) {
-        if (name == null || name.isEmpty()) {
+        if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("A name must be provided");
         }
         this.name = name;
@@ -15,7 +15,7 @@ public class Player {
     }
 
     // if no name specified default name to player
-    public Player() { this("player " + Integer.toString(count)); }
+    public Player() { this("player " + count); }
 
     public String getName() {
         return this.name;
@@ -25,9 +25,15 @@ public class Player {
 
     public String getRole() { return role; }
 
-    public void setName(String name) { this.name = name; }
+    public void setWins(int wins) {
+        if (wins < 0) {
+            throw new IllegalArgumentException("Wins cannot be negative.");
+        }
 
-    public void setWins(int wins) { this.wins = wins; }
+        this.wins = wins;
+    }
 
     public void setRole(String role) { this.role = role; }
+
+    public void addWin() { wins++; }
 }
