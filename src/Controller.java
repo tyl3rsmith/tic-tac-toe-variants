@@ -191,35 +191,46 @@ public class Controller {
         System.out.println(message);
     }
 
-    // draws the nine small boards in a 3x3 layout. winners[r][c] is 'X', 'O', '-' (full, no winner) or ' ' (open)
+    // Displays the nine small Tic Tac Toe boards in a 3x3 layout
+    // winners[r][c] stores the state of each small board
+    // 'X' or 'O' = won by that player, '-' = full with no winner, ' ' = still open
     public void displaySuperBoard(Board[][] boards, char[][] winners) {
         System.out.println();
 
+        // loop through each row of the overall Super Tic Tac Toe board
         for (int bigRow = 0; bigRow < 3; bigRow++) {
             StringBuilder header = new StringBuilder();
 
+            // Build the header for each small board in the current row
             for (int bigCol = 0; bigCol < 3; bigCol++) {
+                // Assign each small board a label from A to I based on its position
                 char label = (char) ('A' + bigRow * 3 + bigCol);
                 char state = winners[bigRow][bigCol];
                 String tag = String.valueOf(label);
 
+                // Add the board's status to its label if it is no longer open
                 if (state == '-') {
                     tag += " (full)";
                 } else if (state != ' ') {
                     tag += " (" + state + " won)";
                 }
 
+                // this pads the label and status so the headers align across the row nicely.
                 header.append(String.format("%-14s", tag));
             }
-
             System.out.println(header);
 
+            // Loop through each row within the small Tic Tac Toe boards
             for (int row = 0; row < 3; row++) {
                 StringBuilder line = new StringBuilder();
 
+                // Loop through each small board in the current row of the overall board
                 for (int bigCol = 0; bigCol < 3; bigCol++) {
+
+                    // Print each position in the current row of the small board
                     for (int col = 0; col < 3; col++) {
                         Piece piece = boards[bigRow][bigCol].getPiece(row, col);
+
                         line.append(piece == null ? ' ' : piece.getSymbol());
 
                         if (col < 2) {
@@ -230,6 +241,7 @@ public class Controller {
                     line.append("     ");
                 }
 
+                // Print the completed row across all three small boards.
                 System.out.println(line);
 
                 if (row < 2) {
@@ -237,9 +249,11 @@ public class Controller {
                 }
             }
 
+            // this adds a blank line to separate rows of small boards for visual purposes
             System.out.println();
         }
     }
+
 
     public Position getMove(Player currentPlayer, Board board) {
         System.out.println(currentPlayer.getName() + ": enter row and col numbers separated by a space (e.g., 0 2):");

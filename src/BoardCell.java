@@ -1,4 +1,5 @@
 /* The BoardCell class represents one location on the board by managing the position of the cell and the piece there. */
+
 public class BoardCell {
     private final Position position;
     private Piece piece;
