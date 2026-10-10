@@ -4,23 +4,24 @@ role assignment, player turns, Order win detection, and Chaos win detection. */
 public class OrderAndChaos extends Game {
     private static final int MIN_BOARD_SIZE = 6;
     private static final int MAX_BOARD_SIZE = 6; // can make this larger game will still work
+    private static final int NUM_PLAYERS = 2;
 
-    public OrderAndChaos(Controller controller) {
-        super(controller);
-    }
 
-    public OrderAndChaos() {
-        super();
-    }
+    public OrderAndChaos(Controller controller) { super(controller); }
 
+    public OrderAndChaos() { super(); }
+
+    // displays welcome message, sets up the game, and calls play method
     @Override
     public void start() {
         controller.displayWelcomeOrderAndChaos();
-
         setupGame();
+        play(true);
+    }
 
-        boolean playing = true;
-
+    // continues playing turns until the game is won
+    @Override
+    public void play(boolean playing) {
         while (playing) {
             playTurn(); // take a turn
 
@@ -29,15 +30,24 @@ public class OrderAndChaos extends Game {
             } else if (!orderCanStillWin()) {
                 playing = handleChaosWin(); // check if there's no more moves left, chaos wins
             } else if (board.isFull()) {
-                playing = handleChaosFullBoard(); // full board chaos wins
+                playing = handleChaosWinFullBoard(); // full board chaos wins
             } else {
                 turn++; // play the next turn
             }
         }
+
     }
 
+    // gets symbol choice from the player
+    @Override
+    protected char getPlayerSymbol(Player player) { return controller.chooseSymbol(); }
+
+    // sets up the game board with user specified dimension and num players default is 2 with the roles order and chaos
+    private void setupGame() { setupBoardAndPlayers(MIN_BOARD_SIZE, MAX_BOARD_SIZE, OrderAndChaos.NUM_PLAYERS); assignRoles(); }
+
+    // assigns roles order and chaos to the 2 players
     private void assignRoles() {
-        String role1 = controller.chooseRole(player1);
+        String role1 = controller.chooseRole(players[0]);
         String role2; // the other person automatically gets whatever player 1 didn't pick
 
         if (role1.equals("Order")) {
@@ -46,52 +56,39 @@ public class OrderAndChaos extends Game {
             role2 = "Order";
         }
 
-        player1.setRole(role1);
-        player2.setRole(role2);
+        players[0].setRole(role1);
+        players[1].setRole(role2);
 
-        System.out.println(player2.getName() + ", you have the role " + role2);
+        controller.displayMessgae(players[1].getName() + ", you have the role " + role2);
     }
 
-    private void setupGame() {
-        setupBoardAndPlayers(MIN_BOARD_SIZE, MAX_BOARD_SIZE);
-        assignRoles();
-    }
+    private Player getOrderPlayer() { return players[0].getRole().equals("Order") ? players[0] : players[1]; }
 
+    private Player getChaosPlayer() { return players[0].getRole().equals("Chaos") ? players[0] : players[1]; }
+
+    // determines if there's any valid positions left for order to win if not chaos wins
+    private boolean orderCanStillWin() { return horizontalCanStillWin() || verticalCanStillWin() || mainDiagonalCanStillWin() || antiDiagonalCanStillWin(); }
+
+    // checks the 4 possible directions a player can win in order and chaos
     @Override
-    protected char chooseSymbol(Player player) {
-        return controller.chooseSymbol();
-    }
+    protected boolean checkWin() { return checkRows() || checkColumns() || checkMainDiagonals() || checkAntiDiagonals(); }
 
     private boolean handleOrderWin() {
         Player orderPlayer = getOrderPlayer();
-
         orderPlayer.addWin();
-
         return endGame(orderPlayer.getName() + ", Order wins!");
     }
 
     private boolean handleChaosWin() {
         Player chaosPlayer = getChaosPlayer();
-
         chaosPlayer.addWin();
-
         return endGame(chaosPlayer.getName() + ", Chaos wins!");
     }
 
-    private boolean handleChaosFullBoard() {
+    private boolean handleChaosWinFullBoard() {
         Player chaosPlayer = getChaosPlayer();
-
         chaosPlayer.addWin();
-
         return endGame(chaosPlayer.getName() + ", Chaos wins no more valid moves!");
-    }
-
-    private Player getOrderPlayer() {
-        return player1.getRole().equals("Order") ? player1 : player2;
-    }
-
-    private Player getChaosPlayer() {
-        return player1.getRole().equals("Chaos") ? player1 : player2;
     }
 
     private boolean checkRows() {
@@ -388,51 +385,4 @@ public class OrderAndChaos extends Game {
 
         return false;
     }
-
-    private boolean orderCanStillWin() {
-        return horizontalCanStillWin() || verticalCanStillWin() || mainDiagonalCanStillWin() || antiDiagonalCanStillWin();
-    }
-
-    @Override
-    protected boolean checkWin() {
-        return checkRows() || checkColumns() || checkMainDiagonals() || checkAntiDiagonals();
-    }
-
-    /*
-    public void testChaosBoard() {
-        board = new Board(10, 10);
-
-        char[][] testBoard = {
-                {'X','O','O','X','X','O','O','X','O','O'},
-                {'X','X','X','O','O','X','O','X','X','X'},
-                {'O','X','O','X','X','X','X','X','O','O'},
-                {'X','X','O','O','X','O','O','O','X','X'},
-                {'X','O','X','O','X','X','X','O','X','X'},
-                {'O','X','O','X','X','O','X','O','O','X'},
-                {'X','O','O','X','O','X','O','O','X','X'},
-                {'X','X','O','X','O','X','O','O','O','O'},
-                {'O','X','O','X','X','O','X','X','X','O'},
-                {'X','X','O','X','X','X','O','O','O','X'}
-        };
-
-        // Put each Piece onto the board
-        for (int row = 0; row < 10; row++) {
-            for (int col = 0; col < 10; col++) {
-                Position position = new Position(row, col);
-                Piece piece = new Piece(testBoard[row][col], position);
-
-                board.updateBoard(position, piece);
-            }
-        }
-
-        controller.displayBoard(board);
-
-        System.out.println("checkWin(): " + checkWin());
-        System.out.println("orderCanStillWin(): " + orderCanStillWin());
-
-        if (!checkWin() && !orderCanStillWin()) {
-            System.out.println("chaos won in 10x10");
-        }
-    }
-    */
 }

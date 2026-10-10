@@ -1,10 +1,10 @@
 /* This class is a subclass of Game and implements the Tic Tac Toe game, including board setup,
-player turns,role assignment, win detection, and draw detection. */
+player turns, role assignment, win detection, and draw detection. */
 
 public class TicTacToe extends Game {
-    // class scales with board size
     private static final int MIN_BOARD_SIZE = 3;
     private static final int MAX_BOARD_SIZE = 10;
+    private static final int NUM_PLAYERS = 2;
 
     public TicTacToe(Controller controller) {
         super(controller);
@@ -14,14 +14,17 @@ public class TicTacToe extends Game {
         super();
     }
 
+    // displays welcome message, sets up the game, and calls play method
     @Override
     public void start() {
         controller.displayWelcomeTicTacToe();
-
         setupGame();
+        play(true);
+    }
 
-        boolean playing = true;
-
+    // continues playing turns until the game is won or there's a draw
+    @Override
+    public void play(boolean playing) {
         while (playing) {
             playTurn(); // take a turn
 
@@ -35,34 +38,32 @@ public class TicTacToe extends Game {
         }
     }
 
+
+    // gets symbol from the player
     @Override
-    protected char chooseSymbol(Player player) {
-        return player == player1 ? 'X' : 'O';
-    }
+    protected char getPlayerSymbol(Player player) { return player == players[0] ? 'X' : 'O'; }
 
-    private void setupGame() {
-        setupBoardAndPlayers(MIN_BOARD_SIZE, MAX_BOARD_SIZE);
-    }
+    // sets up the game board with user specified dimension and num players default is 2
+    private void setupGame() { setupBoardAndPlayers(MIN_BOARD_SIZE, MAX_BOARD_SIZE, NUM_PLAYERS); }
 
-    private char getPlayerSymbol(Player player) {
-        return player == player1 ? 'X' : 'O';
-    }
+    public boolean isBoardWon() { return this.checkWin(); }
 
-    private boolean handleWin() {
-        Player winner = getCurrentPlayer();
+    public boolean isBoardFull() { return this.board.isFull(); }
 
-        winner.addWin();
+    // ends the game in a draw win count remains the same
+    private boolean handleDraw() { return endGame("It's a draw!"); }
 
-        return endGame(winner.getName() + " wins!");
-    }
-
-    private boolean handleDraw() {
-        return endGame("It's a draw!");
-    }
-
+    // checks the 4 possible directions a player can win in tic tac toe
     @Override
     protected boolean checkWin() {
         return checkRows() || checkColumns() || checkMainDiagonal() || checkAntiDiagonal();
+    }
+
+    // updates player's win count and ends the game
+    private boolean handleWin() {
+        Player winner = getCurrentPlayer();
+        winner.addWin();
+        return endGame(winner.getName() + " wins!");
     }
 
     private boolean checkRows() {
@@ -152,6 +153,26 @@ public class TicTacToe extends Game {
             }
         }
 
+        return true;
+    }
+
+    public boolean placeSinglePiece(Position position, Player player) {
+        if (position == null || player == null) {
+            return false;
+        }
+
+        if (player != players[0] && player != players[1]) {
+            return false;
+        }
+
+        if (!board.isValidMove(position)) {
+            return false;
+        }
+
+        char symbol = getPlayerSymbol(player);
+        Piece piece = new Piece(symbol, position);
+
+        board.updateBoard(position, piece);
         return true;
     }
 }

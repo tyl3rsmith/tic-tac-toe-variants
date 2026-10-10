@@ -29,7 +29,6 @@ public class Player {
         if (wins < 0) {
             throw new IllegalArgumentException("Wins cannot be negative.");
         }
-
         this.wins = wins;
     }
 
